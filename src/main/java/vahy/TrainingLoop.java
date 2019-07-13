@@ -10,7 +10,7 @@ public class TrainingLoop {
 
     private static final Logger logger = LoggerFactory.getLogger(SpeedTesting.class.getName());
 
-    public static void trainingLoop(double[][] inputData, double[][] targetData, TFModel model) {
+    public static void trainingLoop(double[][] inputData, double[][] targetData, TFModel model, double keepProbability, double learningRate) {
         SimpleTimer timer = new SimpleTimer();
         double[][] outputData = new double[inputData.length][];
 
@@ -30,7 +30,7 @@ public class TrainingLoop {
 
         checkPredictionDifference(targetData[0].length, outputData, outputData2);
         printFirstPredictions(outputData, 10);
-        model.fit(inputData, targetData);
+        model.fit(inputData, targetData, learningRate, keepProbability);
     }
 
     private static void printFirstPredictions(double[][] outputData, int predictionCount) {
@@ -43,7 +43,7 @@ public class TrainingLoop {
         for (int j = 0; j < outputData.length; j++) {
             for (int k = 0; k < outputDim; k++) {
                 if(Math.abs(outputData2[j][k] - outputData[j][k]) > Math.pow(10, -10)) {
-                    throw new IllegalStateException("Predictions differ");
+                    throw new IllegalStateException("Predictions differ: [" + Arrays.toString(outputData[j]) + "] and [" +  Arrays.toString(outputData2[j]) + "]");
                 }
             }
         }

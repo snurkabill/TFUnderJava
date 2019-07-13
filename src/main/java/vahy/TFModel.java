@@ -31,6 +31,7 @@ public class TFModel implements Closeable {
     private double[] outputVector;
     private DoubleBuffer doubleBuffer;
     private double[][] inputMatrixForOneVector;
+    private Tensor<Double> inferenceKeepProbability = Tensors.create(1.0);
 
     public TFModel(int inputDimension, int outputDimension, int trainingIterations, int batchSize, byte[] bytes, SplittableRandom random) {
         this.inputDimension = inputDimension;
@@ -70,7 +71,7 @@ public class TFModel implements Closeable {
         }
     }
 
-    public void fit(double[][] input, double[][] target) {
+    public void fit(double[][] input, double[][] target, double learningRate, double keepProbability) {
         if(input.length != target.length) {
             throw new IllegalArgumentException("Input and target lengths differ");
         }
@@ -83,12 +84,16 @@ public class TFModel implements Closeable {
                 fillBatch(j, order, input, target);
                 try (
                     Tensor<Double> tfInput = Tensors.create(this.trainInputBatch);
-                    Tensor<Double> tfTarget = Tensors.create(this.trainTargetBatch)
+                    Tensor<Double> tfTarget = Tensors.create(this.trainTargetBatch);
+                    Tensor<Double> tfLearningRate = Tensors.create(learningRate);
+                    Tensor<Double> tfKeepProbability = Tensors.create(keepProbability);
                 ) {
                     sess
                         .runner()
                         .feed("input_node", tfInput)
                         .feed("target_node", tfTarget)
+                        .feed("learning_rate_node", tfLearningRate)
+                        .feed("keep_prob_node", tfKeepProbability)
                         .addTarget("optimize_node")
                         .run();
                 }
@@ -111,13 +116,13 @@ public class TFModel implements Closeable {
     public double[] predict(double[] input) {
         System.arraycopy(input, 0, inputMatrixForOneVector[0], 0, inputDimension);
         try (Tensor<Double> tfInput = Tensors.create(inputMatrixForOneVector)) {
-            Tensor<Double> output = sess
+            Tensor<?> output = sess
                 .runner()
                 .feed("input_node", tfInput)
+                .feed("keep_prob_node", inferenceKeepProbability)
                 .fetch("prediction_node")
                 .run()
-                .get(0)
-                .expect(Double.class);
+                .get(0);
 
             output.writeTo(doubleBuffer);
             doubleBuffer.position(0);
@@ -133,10 +138,9 @@ public class TFModel implements Closeable {
             sess
                 .runner()
                 .feed("input_node", tfInput)
+                .feed("keep_prob_node", inferenceKeepProbability)
                 .fetch("prediction_node")
                 .run()
-                .stream()
-                .map(x -> x.expect(Double.class))
                 .forEach(x -> {
                     x.writeTo(doubleBuffer);
                     x.close(); // needed?
@@ -162,6 +166,7 @@ public class TFModel implements Closeable {
     public void close() {
         logger.trace("Finalizing TF model resources");
         sess.close();
+        inferenceKeepProbability.close();
         logger.debug("TF resources closed");
     }
 }

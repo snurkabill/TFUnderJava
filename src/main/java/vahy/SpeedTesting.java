@@ -37,7 +37,7 @@ public class SpeedTesting {
 
         try(TFModel model = new TFModel(inputDim, outputDim, 1, batchSize, SpeedTesting.class.getClassLoader().getResourceAsStream("tfModel/graph_FastTF.pb").readAllBytes(), random))
         {
-            TrainingLoop.trainingLoop(inputData, targetData, model);
+            TrainingLoop.trainingLoop(inputData, targetData, model, 1, 0.01);
         } catch (IOException e) {
             e.printStackTrace();
         }

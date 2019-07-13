@@ -115,7 +115,7 @@ print(A_output.name)
 # print('Tensor to read value of W                ', W.value().name)
 # print('Tensor to read value of b                ', b.value().name)
 
-with open('../../resources/tfModel/graph_' + benchmark_name + '.pb', 'wb') as f:
+with open('../../../resources/tfModel/graph_' + benchmark_name + '.pb', 'wb') as f:
     f.write(tf.get_default_graph().as_graph_def().SerializeToString())
 
 
