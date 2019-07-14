@@ -14,9 +14,9 @@ import java.util.Random;
 import java.util.SplittableRandom;
 import java.util.stream.IntStream;
 
-public class TFModel implements Model, Closeable {
+public class TFModelWithArgs implements Model, Closeable {
 
-    private static final Logger logger = LoggerFactory.getLogger(TFModel.class.getName());
+    private static final Logger logger = LoggerFactory.getLogger(TFModelWithArgs.class.getName());
 
     private final int inputDimension;
     private final int outputDimension;
@@ -33,7 +33,7 @@ public class TFModel implements Model, Closeable {
     private double[][] inputMatrixForOneVector;
     private Tensor<Double> inferenceKeepProbability = Tensors.create(1.0);
 
-    public TFModel(int inputDimension, int outputDimension, int trainingIterations, int batchSize, byte[] bytes, SplittableRandom random) {
+    public TFModelWithArgs(int inputDimension, int outputDimension, int trainingIterations, int batchSize, byte[] bytes, SplittableRandom random) {
         this.inputDimension = inputDimension;
         this.outputDimension = outputDimension;
         this.trainingIterations = trainingIterations;
@@ -85,15 +85,15 @@ public class TFModel implements Model, Closeable {
                 try (
                     Tensor<Double> tfInput = Tensors.create(this.trainInputBatch);
                     Tensor<Double> tfTarget = Tensors.create(this.trainTargetBatch);
-//                    Tensor<Double> tfLearningRate = Tensors.create(learningRate);
-//                    Tensor<Double> tfKeepProbability = Tensors.create(keepProbability);
+                    Tensor<Double> tfLearningRate = Tensors.create(learningRate);
+                    Tensor<Double> tfKeepProbability = Tensors.create(keepProbability);
                 ) {
                     sess
                         .runner()
                         .feed("input_node", tfInput)
                         .feed("target_node", tfTarget)
-//                        .feed("learning_rate_node", tfLearningRate)
-//                        .feed("keep_prob_node", tfKeepProbability)
+                        .feed("learning_rate_node", tfLearningRate)
+                        .feed("keep_prob_node", tfKeepProbability)
                         .addTarget("optimize_node")
                         .run();
                 }
@@ -119,7 +119,7 @@ public class TFModel implements Model, Closeable {
             Tensor<?> output = sess
                 .runner()
                 .feed("input_node", tfInput)
-//                .feed("keep_prob_node", inferenceKeepProbability)
+                .feed("keep_prob_node", inferenceKeepProbability)
                 .fetch("prediction_node")
                 .run()
                 .get(0);
@@ -138,7 +138,7 @@ public class TFModel implements Model, Closeable {
             sess
                 .runner()
                 .feed("input_node", tfInput)
-//                .feed("keep_prob_node", inferenceKeepProbability)
+                .feed("keep_prob_node", inferenceKeepProbability)
                 .fetch("prediction_node")
                 .run()
                 .forEach(x -> {

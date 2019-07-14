@@ -1,24 +1,17 @@
 import tensorflow as tf
 
-benchmark_name = 'ThesisNet'
-input_count = 7
-hidden_count_1 = 50
-hidden_count_2 = 50
-hidden_count_3 = 100
+benchmark_name = 'MinimalNetworkForCallTestSpeed'
+input_count = 1
 Q_output_count = 1
 risk_output_count = 1
-action_output_count = 3
+action_output_count = 1
 
 output_count = Q_output_count + risk_output_count + action_output_count
 
 tf.reset_default_graph()
 
-Relu = tf.nn.relu
-Tanh = tf.nn.tanh
-BatchNormalization = tf.layers.batch_normalization
-Dense = tf.layers.dense
-Dropout = tf.nn.dropout
-
+seed = 0
+tf.random.set_random_seed(seed)
 
 x = tf.placeholder(tf.float64, [None, input_count], name= 'input_node')
 target = tf.placeholder(tf.float64, [None, output_count], name = "target_node")
@@ -27,13 +20,9 @@ Q_target = tf.slice(target, [0, 0], [-1, Q_output_count], name = "Q_slice_node")
 risk_target = tf.slice(target, [0, Q_output_count], [-1, risk_output_count], name = "risk_slice_node")
 action_target = tf.slice(target, [0, Q_output_count + risk_output_count], [-1, action_output_count], name = "action_slice_node")
 
-hidden_1 = Dense(x,        hidden_count_1, tf.nn.relu, use_bias = True, kernel_initializer = tf.glorot_normal_initializer(), name = "hidden_1") #, kernel_regularizer= tf.contrib.layers.l2_regularizer(scale=0.0))
-hidden_2 = Dense(hidden_1, hidden_count_2, tf.nn.relu, use_bias = True, kernel_initializer = tf.glorot_normal_initializer(), name = "hidden_2") #, kernel_regularizer= tf.contrib.layers.l2_regularizer(scale=0.0))
-# hidden_3 = Dense(hidden_2, hidden_count_3, tf.nn.relu, use_bias = True, kernel_initializer = tf.glorot_normal_initializer(), name = "hidden_3") #, kernel_regularizer= tf.contrib.layers.l2_regularizer(scale=0.0))
-
-Q_output      = tf.layers.dense(hidden_2, Q_output_count,                   use_bias = True, kernel_initializer = tf.zeros_initializer, bias_initializer = tf.zeros_initializer, name = 'Q_output_node')
-risk_output   = tf.layers.dense(hidden_2, risk_output_count, tf.nn.sigmoid, use_bias = True, kernel_initializer = tf.zeros_initializer, bias_initializer = tf.zeros_initializer, name = "risk_output_node")
-action_output = tf.layers.dense(hidden_2, action_output_count, tf.nn.softmax, use_bias = True, kernel_initializer = tf.zeros_initializer, bias_initializer = tf.zeros_initializer, name = "action_output_node")
+Q_output      = tf.layers.dense(x, Q_output_count,                   use_bias = True, kernel_initializer = tf.zeros_initializer, bias_initializer = tf.zeros_initializer, name = 'Q_output_node')
+risk_output   = tf.layers.dense(x, risk_output_count, tf.nn.sigmoid, use_bias = True, kernel_initializer = tf.zeros_initializer, bias_initializer = tf.zeros_initializer, name = "risk_output_node")
+action_output = tf.layers.dense(x, action_output_count, tf.nn.softmax, use_bias = True, kernel_initializer = tf.zeros_initializer, bias_initializer = tf.zeros_initializer, name = "action_output_node")
 
 prediction = tf.concat([Q_output, risk_output, action_output], 1, name = "concat_node")
 prediction_identity = tf.identity(prediction, name = "prediction_node")

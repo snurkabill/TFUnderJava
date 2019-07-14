@@ -14,14 +14,17 @@ public class TrainingLoop {
         SimpleTimer timer = new SimpleTimer();
         double[][] outputData = new double[inputData.length][];
 
+        long nanoStart = System.nanoTime();
         timer.startTimer();
         for (int j = 0; j < inputData.length; j++) {
             double[] prediction = model.predict(inputData[j]);
             outputData[j] = new double[prediction.length];
             System.arraycopy(prediction, 0, outputData[j], 0, targetData[0].length);
         }
+        long nanoEnd = System.nanoTime();
         timer.stopTimer();
         logger.info("Predicting [{}] samples by one took: [{}] ms. Per sample: [{}] ms. ", inputData.length, timer.getTotalTimeInNanos() / (1000.0 * 1000.0), timer.getTotalTimeInNanos() / (1000.0 * 1000.0 * inputData.length));
+        logger.info("Precise: [{}] nanos per sample", (nanoEnd - nanoStart) / (double) inputData.length);
 
         timer.startTimer();
         double[][] outputData2 = model.predict(inputData);
