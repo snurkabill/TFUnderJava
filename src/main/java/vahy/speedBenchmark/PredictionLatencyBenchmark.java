@@ -29,8 +29,8 @@ import java.util.concurrent.TimeUnit;
 @OutputTimeUnit(TimeUnit.SECONDS)
 @State(Scope.Benchmark)
 @Fork(value = 3, jvmArgs = {"-Xms4G", "-Xmx4G"})
-@Warmup(iterations = 5)
-@Measurement(iterations = 10)
+@Warmup(iterations = 3)
+@Measurement(iterations = 5)
 public class PredictionLatencyBenchmark {
 
     @Param({"10"})
@@ -59,7 +59,7 @@ public class PredictionLatencyBenchmark {
         TARGET_DATA = createTargetData(random);
         model = implementation.equals("WithArgs") ?
             new TFModelWithArgs(1, 3, 1, 1, PredictionLatencyBenchmark.class.getClassLoader().getResourceAsStream("tfModel/graph_MinimalNetworkForCallTestSpeed_withArgs.pb").readAllBytes(), random) :
-            new TFModel(1, 3, 1, 1, PredictionLatencyBenchmark.class.getClassLoader().getResourceAsStream("tfModel/graph_MinimalNetworkForCallTestSpeed.pb").readAllBytes(), random);
+            new TFModel(1, 3, 1, 1, PredictionLatencyBenchmark.class.getClassLoader().getResourceAsStream("tfModel/graph_MinimalNetworkForCallTestSpeed.pb").readAllBytes(), 1, random);
         model.fit(INPUT_DATA, TARGET_DATA, 0.01, 1.0);
     }
 

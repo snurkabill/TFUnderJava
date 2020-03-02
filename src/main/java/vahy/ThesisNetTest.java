@@ -3,7 +3,6 @@ package vahy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.SplittableRandom;
 
@@ -111,7 +110,7 @@ public class ThesisNetTest {
         target[19] = target20;
 
 
-        try(TFModel model = new TFModel(inputDim, outputDim, 1, batchSize, SpeedTesting.class.getClassLoader().getResourceAsStream("tfModel/graph_ThesisNet.pb").readAllBytes(), random))
+        try(TFModel model = new TFModel(inputDim, outputDim, 1, batchSize, SpeedTesting.class.getClassLoader().getResourceAsStream("tfModel/graph_ThesisNet.pb").readAllBytes(), 1, random))
         {
             for (int i = 0; i < 1000; i++) {
                 TrainingLoop.trainingLoop(input, target, model, 0.5, 0.01);
@@ -122,7 +121,7 @@ public class ThesisNetTest {
                 logger.info("[{}]", Arrays.toString(predictions[i]));
             }
 
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }

@@ -3,7 +3,6 @@ package vahy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.SplittableRandom;
 
 public class SpeedTesting {
@@ -35,10 +34,10 @@ public class SpeedTesting {
             targetData[i] = target;
         }
 
-        try(TFModel model = new TFModel(inputDim, outputDim, 1, batchSize, SpeedTesting.class.getClassLoader().getResourceAsStream("tfModel/graph_FastTF.pb").readAllBytes(), random))
+        try(TFModel model = new TFModel(inputDim, outputDim, 1, batchSize, SpeedTesting.class.getClassLoader().getResourceAsStream("tfModel/graph_FastTF.pb").readAllBytes(), 1, random))
         {
             TrainingLoop.trainingLoop(inputData, targetData, model, 1, 0.01);
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
