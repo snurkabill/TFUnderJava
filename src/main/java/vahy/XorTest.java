@@ -20,9 +20,9 @@ public class XorTest {
         double[][] inputData = { {0.0, 0.0}, {1.0, 0.0}, {0.0, 1.0}, {1.0, 1.0}};
         double[][] targetData =  { {-1}, {1}, {1}, {-1}};
 
-        try(TFModel model = new TFModel(inputDim, outputDim, 1, batchSize, XorTest.class.getClassLoader().getResourceAsStream("tfModel/graph_XorNetwork.pb").readAllBytes(), 1, random))
+        try(TFModelImproved model = new TFModelImproved(inputDim, outputDim, 1, batchSize, XorTest.class.getClassLoader().getResourceAsStream("tfModel/graph_XorNetwork.pb").readAllBytes(), 1, random))
         {
-            for (int i = 0; i < 100; i++) {
+            for (int i = 0; i < 1000; i++) {
                 TrainingLoop.trainingLoop(inputData, targetData, model, 0.5, 0.01);
             }
             double[][] output = model.predict(inputData);

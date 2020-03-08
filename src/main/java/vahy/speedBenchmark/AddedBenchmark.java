@@ -16,6 +16,8 @@ import org.tensorflow.Session;
 import vahy.TFAdder;
 
 import java.io.IOException;
+import java.util.Map;
+import java.util.Properties;
 import java.util.SplittableRandom;
 import java.util.concurrent.TimeUnit;
 
@@ -76,7 +78,7 @@ public class AddedBenchmark {
 //        var count = 10_000_000;
         byte[] bytes = new byte[0];
         try {
-            bytes = PredictionLatencyBenchmark.class.getClassLoader().getResourceAsStream("tfModel/graph_AddingTwoNumbers.pb").readAllBytes();
+            bytes = PredictionLatencyBenchmark.class.getClassLoader().getResourceAsStream("tfModel/graph_AddingTwoNumbers4.pb").readAllBytes();
         } catch (IOException e) {
             throw new RunnerException(e);
         }

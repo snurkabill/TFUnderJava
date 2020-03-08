@@ -1,6 +1,6 @@
 import tensorflow as tf
 
-benchmark_name = 'AddingTwoNumbers'
+benchmark_name = 'AddingTwoNumbers4'
 input_count = 2
 output_count = 1
 

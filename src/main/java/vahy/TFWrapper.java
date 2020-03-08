@@ -9,9 +9,7 @@ import vahy.utils.ImmutableTuple;
 
 import java.io.Closeable;
 import java.nio.DoubleBuffer;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class TFWrapper implements Closeable {
 
@@ -22,12 +20,11 @@ public class TFWrapper implements Closeable {
     private final Session sess;
 
     private final double[] singleOutputArray;
+    private final DoubleBuffer singleInputDoubleBuffer;
     private final DoubleBuffer singleOutputDoubleBuffer;
 
-    private final double[][] inputMatrixForOneVector;
-    private final Tensor<Double> tfSingleInput;
-
-    private final Map<Integer, ImmutableTuple<ImmutableTuple<double[][], Tensor<Double>>, ImmutableTuple<double[], DoubleBuffer>>> inputBufferMap = new HashMap<>();
+    private final long[] singleInputShape;
+    private final long[] batchedInputShape;
 
     private Tensor<Double> inferenceKeepProbability = Tensors.create(1.0);
 
@@ -37,24 +34,30 @@ public class TFWrapper implements Closeable {
 
         this.singleOutputArray = new double[outputDimension];
         this.singleOutputDoubleBuffer = DoubleBuffer.wrap(singleOutputArray);
-        this.inputMatrixForOneVector = new double[1][inputDimension];
-        this.tfSingleInput = Tensors.create(inputMatrixForOneVector);
+        this.singleInputDoubleBuffer = DoubleBuffer.allocate(inputDimension);
+        this.singleInputShape = new long[] {1, inputDimension};
+        this.batchedInputShape = new long[] {0, inputDimension};
 
         this.sess = sess;
-
         logger.info("Initialized model based on TensorFlow backend.");
         logger.debug("Model with input dimension: [{}] and output dimension: [{}].", inputDimension, outputDimension);
     }
 
     public double[] predict(double[] input) {
-        System.arraycopy(input, 0, inputMatrixForOneVector[0], 0, inputDimension);
-        Tensor<?> output = sess
+        singleInputDoubleBuffer.position(0);
+        singleInputDoubleBuffer.put(input);
+        singleInputDoubleBuffer.flip();
+        var inputTensor = Tensor.create(singleInputShape, singleInputDoubleBuffer);
+        List<Tensor<?>> tensors = sess
             .runner()
-            .feed("input_node", tfSingleInput)
-            .fetch("prediction_node")
-            .run()
-            .get(0);
-
+            .feed("input_node", inputTensor)
+            .fetch("prediction_node", 0)
+            .run();
+        inputTensor.close();
+        if(tensors.size() != 1) {
+            throw new IllegalStateException("There should be only one output tensor.");
+        }
+        var output = tensors.get(0);
         output.writeTo(singleOutputDoubleBuffer);
         singleOutputDoubleBuffer.position(0);
         output.close();
@@ -62,54 +65,31 @@ public class TFWrapper implements Closeable {
     }
 
     public double[][] predict(double[][] input) {
-
-        var length = input.length;
-        if (!inputBufferMap.containsKey(length)) {
-            var inputArray = new double[input.length][inputDimension];
-            var outputArray = new double[outputDimension * input.length];
-            var inputTensor = Tensors.create(inputArray);
-            var buffer = DoubleBuffer.wrap(outputArray);
-            var inputTuple = new ImmutableTuple<>(inputArray, inputTensor);
-            var outputTuple = new ImmutableTuple<>(outputArray, buffer);
-            inputBufferMap.put(length, new ImmutableTuple<>(inputTuple, outputTuple));
+        DoubleBuffer doubleBuffer = DoubleBuffer.allocate(input.length * inputDimension);
+        for (double[] doubles : input) {
+            doubleBuffer.put(doubles);
         }
-        var buffers = inputBufferMap.get(length);
-        var inputArray = buffers.getFirst().getFirst();
-        var inputTensor = buffers.getFirst().getSecond();
-        var outputArray = buffers.getSecond().getFirst();
-        var outputBuffer = buffers.getSecond().getSecond();
+        doubleBuffer.position(0);
+        batchedInputShape[0] = input.length;
+        var inputTensor = Tensor.create(batchedInputShape, doubleBuffer);
+        List<Tensor<?>> tensors = sess
+            .runner()
+            .feed("input_node", inputTensor)
+//                .feed("keep_prob_node", inferenceKeepProbability)
+            .fetch("prediction_node", 0)
+            .run();
+        inputTensor.close();
 
-        for (int i = 0; i < input.length; i++) {
-            System.arraycopy(input[i], 0, inputArray[i], 0, inputDimension);
+        if(tensors.size() != 1) {
+            throw new IllegalStateException("There should be only one output tensor.");
         }
-
-        Session.Runner runner = sess.runner();
-        runner = runner.feed("input_node", Tensor.create(inputArray));
-        runner = runner.fetch("prediction_node");
-        List<Tensor<?>> output = runner.run();
-
-        for (Tensor<?> tensor : output) {
-            tensor.writeTo(outputBuffer);
-            tensor.close();
-        }
-
-//
-//        sess
-//            .runner()
-//            .feed("input_node", inputTensor)
-////                .feed("keep_prob_node", inferenceKeepProbability)
-//            .fetch("prediction_node")
-//            .run()
-//            .forEach(x -> {
-//                x.writeTo(outputBuffer);
-//                x.close();
-//            });
         double[][] outputMatrix = new double[input.length][];
         for (int i = 0; i < outputMatrix.length; i++) {
             outputMatrix[i] = new double[outputDimension];
-            System.arraycopy(outputArray, i * outputDimension, outputMatrix[i], 0, outputDimension);
         }
-        outputBuffer.clear();
+        var output = tensors.get(0);
+        output.copyTo(outputMatrix);
+        output.close();
         return outputMatrix;
     }
 
