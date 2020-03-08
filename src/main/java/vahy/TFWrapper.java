@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 import org.tensorflow.Session;
 import org.tensorflow.Tensor;
 import org.tensorflow.Tensors;
+import vahy.utils.ImmutableTuple;
 
 import java.io.Closeable;
 import java.nio.DoubleBuffer;
