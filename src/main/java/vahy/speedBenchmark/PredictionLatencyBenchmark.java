@@ -18,7 +18,7 @@ import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 import vahy.Model;
-import vahy.TFModel;
+import vahy.TFModelImproved;
 import vahy.TFModelWithArgs;
 
 import java.io.IOException;
@@ -59,7 +59,7 @@ public class PredictionLatencyBenchmark {
         TARGET_DATA = createTargetData(random);
         model = implementation.equals("WithArgs") ?
             new TFModelWithArgs(1, 3, 1, 1, PredictionLatencyBenchmark.class.getClassLoader().getResourceAsStream("tfModel/graph_MinimalNetworkForCallTestSpeed_withArgs.pb").readAllBytes(), random) :
-            new TFModel(1, 3, 1, 1, PredictionLatencyBenchmark.class.getClassLoader().getResourceAsStream("tfModel/graph_MinimalNetworkForCallTestSpeed.pb").readAllBytes(), 1, random);
+            new TFModelImproved(1, 3, 1, 1, PredictionLatencyBenchmark.class.getClassLoader().getResourceAsStream("tfModel/graph_MinimalNetworkForCallTestSpeed.pb").readAllBytes(), 1, random);
         model.fit(INPUT_DATA, TARGET_DATA, 0.01, 1.0);
     }
 

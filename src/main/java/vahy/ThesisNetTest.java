@@ -110,7 +110,7 @@ public class ThesisNetTest {
         target[19] = target20;
 
 
-        try(TFModel model = new TFModel(inputDim, outputDim, 1, batchSize, SpeedTesting.class.getClassLoader().getResourceAsStream("tfModel/graph_ThesisNet.pb").readAllBytes(), 1, random))
+        try(TFModelImproved model = new TFModelImproved(inputDim, outputDim, 1, batchSize, SpeedTesting.class.getClassLoader().getResourceAsStream("tfModel/graph_ThesisNet.pb").readAllBytes(), 1, random))
         {
             for (int i = 0; i < 1000; i++) {
                 TrainingLoop.trainingLoop(input, target, model, 0.5, 0.01);

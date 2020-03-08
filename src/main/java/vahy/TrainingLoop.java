@@ -5,31 +5,43 @@ import org.slf4j.LoggerFactory;
 import vahy.timer.SimpleTimer;
 
 import java.util.Arrays;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class TrainingLoop {
 
     private static final Logger logger = LoggerFactory.getLogger(SpeedTesting.class.getName());
 
-    public static void trainingLoop(double[][] inputData, double[][] targetData, TFModel model, double keepProbability, double learningRate) {
+    public static void trainingLoop(double[][] inputData, double[][] targetData, TFModelImproved model, double keepProbability, double learningRate) {
         SimpleTimer timer = new SimpleTimer();
         double[][] outputData = new double[inputData.length][];
 
-        long nanoStart = System.nanoTime();
+        ExecutorService executorService = Executors.newFixedThreadPool(4);
+
+
+
+
         timer.startTimer();
         for (int j = 0; j < inputData.length; j++) {
             double[] prediction = model.predict(inputData[j]);
             outputData[j] = new double[prediction.length];
             System.arraycopy(prediction, 0, outputData[j], 0, targetData[0].length);
         }
-        long nanoEnd = System.nanoTime();
         timer.stopTimer();
         logger.info("Predicting [{}] samples by one took: [{}] ms. Per sample: [{}] ms. ", inputData.length, timer.getTotalTimeInNanos() / (1000.0 * 1000.0), timer.getTotalTimeInNanos() / (1000.0 * 1000.0 * inputData.length));
-        logger.info("Precise: [{}] nanos per sample", (nanoEnd - nanoStart) / (double) inputData.length);
+        logger.info("Precise: [{}] nanos per sample", timer.getTotalTimeInNanos() / (double) inputData.length);
 
         timer.startTimer();
         double[][] outputData2 = model.predict(inputData);
         timer.stopTimer();
         logger.info("Predicting [{}] samples in batch took: [{}] ms. Per sample: [{}] ms. ", inputData.length, timer.getTotalTimeInNanos() / (1000.0 * 1000.0), timer.getTotalTimeInNanos() / (1000.0 * 1000.0 * inputData.length));
+        logger.info("Precise: [{}] nanos per sample", timer.getTotalTimeInNanos() / (double) inputData.length);
+
+        timer.startTimer();
+        double[][] outputData3 = model.predict(inputData);
+        timer.stopTimer();
+        logger.info("Predicting [{}] samples in batch took: [{}] ms. Per sample: [{}] ms. ", inputData.length, timer.getTotalTimeInNanos() / (1000.0 * 1000.0), timer.getTotalTimeInNanos() / (1000.0 * 1000.0 * inputData.length));
+        logger.info("Precise: [{}] nanos per sample", timer.getTotalTimeInNanos() / (double) inputData.length);
 
         checkPredictionDifference(targetData[0].length, outputData, outputData2);
         printFirstPredictions(outputData, 10);
@@ -37,7 +49,7 @@ public class TrainingLoop {
     }
 
     private static void printFirstPredictions(double[][] outputData, int predictionCount) {
-        for (int j = 0; j < (predictionCount < outputData.length ? predictionCount : outputData.length); j++) {
+        for (int j = 0; j < (Math.min(predictionCount, outputData.length)); j++) {
             logger.info("Prediction: [{}]", Arrays.toString(outputData[j]));
         }
     }

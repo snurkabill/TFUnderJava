@@ -13,10 +13,11 @@ public class SpeedTesting {
 
         SplittableRandom random = new SplittableRandom(0);
 
-        int instanceCount = 10000;
-        int batchSize = instanceCount / 100;
+        int instanceCount = 100_000;
+        int batchSize = 1024;
         int inputDim = 20;
         int outputDim = 5;
+        int trainingIterations = 10;
 
         double[][] inputData = new double[instanceCount][];
         double[][] targetData = new double[instanceCount][];
@@ -34,9 +35,11 @@ public class SpeedTesting {
             targetData[i] = target;
         }
 
-        try(TFModel model = new TFModel(inputDim, outputDim, 1, batchSize, SpeedTesting.class.getClassLoader().getResourceAsStream("tfModel/graph_FastTF.pb").readAllBytes(), 1, random))
+        try(TFModelImproved model = new TFModelImproved(inputDim, outputDim, batchSize, trainingIterations, SpeedTesting.class.getClassLoader().getResourceAsStream("tfModel/graph_FastTF.pb").readAllBytes(), 1, random))
         {
-            TrainingLoop.trainingLoop(inputData, targetData, model, 1, 0.01);
+            for (int i = 0; i < 100; i++) {
+                TrainingLoop.trainingLoop(inputData, targetData, model, 1, 0.01);
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
